@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interacción con Base de Datos</title>
+</head>
+<body>
+    <h1>Mi Aplicación de Base de Datos</h1>
+    
+    <!-- Mostrar Datos de la Base de Datos -->
+    <h2>Datos en la Base de Datos:</h2>
+    <ul id="dataList"></ul>
+    
+    <!-- Formulario para Agregar Datos -->
+    <h2>Agregar Datos:</h2>
+    <form id="dataForm">
+        <input type="text" id="newData" placeholder="Nuevo dato">
+        <button type="submit">Agregar</button>
+    </form>
+
+    <script src="script.js"></script>
+</body>
+</html>

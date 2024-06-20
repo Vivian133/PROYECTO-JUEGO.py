@@ -1,0 +1,237 @@
+Imports System.Data.OleDb
+
+Public Class AGREGARPRODUCTO
+    Dim COMANDO As New OleDbCommand
+    Dim CONEXION As New OleDbConnection
+
+    Private Sub AGREGARPRODUCTO_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        CONEXION.ConnectionString = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=C:\Users\fvivi\OneDrive\Documentos\Visual Studio 2013\Projects\proyectoPasteleria\proyectoPasteleria\PASTELERIABD.mdb"
+        CONEXION.Open()
+    End Sub
+
+    Private Sub Poblar()
+        Dim da As New OleDb.OleDbDataAdapter("SELECT * FROM PRODUCTOS WHERE DESCRIPCION LIKE '%" & TXTBUSCAR.Text & "%'", CONEXION)
+        Dim ds As New DataSet
+        da.Fill(ds)
+        If ds.Tables(0).Rows.Count > 0 Then
+            DataGridView1.DataSource = ds.Tables(0)
+        Else
+            DataGridView1.DataSource = Nothing
+        End If
+    End Sub
+
+    Private Sub DataGridView1_CellEnter(sender As Object, e As DataGridViewCellEventArgs) Handles DataGridView1.CellEnter
+        If DataGridView1.Rows.Count > 0 Then
+            TXTCODIGO.Text = DataGridView1.CurrentRow.Cells("CODIGO").Value.ToString
+            TXTNOMBRE.Text = DataGridView1.CurrentRow.Cells("NOMBRE").Value.ToString
+            TXTDESCRIPCION.Text = DataGridView1.CurrentRow.Cells("DESCRIPCION").Value.ToString
+            TXTPRECIO.Text = DataGridView1.CurrentRow.Cells("PRECIO").Value.ToString
+            TXTCANTIDAD.Text = DataGridView1.CurrentRow.Cells("CANTIDAD").Value.ToString
+            TXTRUTA.Text = DataGridView1.CurrentRow.Cells("RUTA").Value.ToString
+
+            Dim openFileDialog1 As New OpenFileDialog()
+            openFileDialog1.Filter = "Archivos de imagen|*.jpg;*.jpeg;*.png;*.bmp|Todos los archivos|*.*"
+            openFileDialog1.Title = "Selecciona una imagen"
+
+            If openFileDialog1.ShowDialog() = DialogResult.OK Then
+                TXTRUTA.Text = openFileDialog1.FileName
+                PictureBox1.Image = Image.FromFile(TXTRUTA.Text)
+            End If
+        End If
+    End Sub
+
+    Private Sub BTNNUEVO_Click(sender As Object, e As EventArgs) Handles BTNNUEVO.Click
+        LIMPIAR()
+    End Sub
+
+    Private Sub LIMPIAR()
+        Me.TXTCODIGO.Clear()
+        Me.TXTNOMBRE.Clear()
+        Me.TXTDESCRIPCION.Clear()
+        Me.TXTPRECIO.Clear()
+        Me.TXTCANTIDAD.Clear()
+        TXTDESCRIPCION.Focus()
+    End Sub
+
+    Private Sub BTNGUARDAR_Click(sender As Object, e As EventArgs) Handles BTNGUARDAR.Click
+        If TXTCODIGO.Text = "0" Then
+            Dim cmb As New OleDb.OleDbCommand("INSERT INTO PRODUCTOS(DESCRIPCION, PRECIO,FOTO) VALUES ('" & TXTDESCRIPCION.Text & "','" & TXTPRECIO.Text & "','" & TXTRUTA.Text & "')", CONEXION)
+            cmb.ExecuteNonQuery()
+            Poblar()
+        Else
+            Dim cmb As New OleDb.OleDbCommand("UPDATE PRODUCTOS SET DESCRIPCION ='" & TXTDESCRIPCION.Text & "', PRECIO='" & TXTPRECIO.Text & "', FOTO= '" & TXTRUTA.Text & "' WHERE CODIGO =" & TXTCODIGO.Text, CONEXION)
+            cmb.ExecuteNonQuery()
+            Poblar()
+        End If
+
+        ' No es necesario el código que sigue ya que COMANDO no se utiliza y genera errores.
+        ' Dim REGISTRO As OleDbDataReader = COMANDO.ExecuteReader
+        ' If REGISTRO.Read = True Then
+        '     MsgBox("EMPLEADO YA EXISTE", MsgBoxStyle.Information, "ERROR")
+        '     LIMPIAR()
+        ' End If
+    End Sub
+
+    Private Sub BTNBUSCAR_Click(sender As Object, e As EventArgs) Handles BTNBUSCAR.Click
+        Poblar()
+    End Sub
+
+    Private Sub BTNELIMINAR_Click(sender As Object, e As EventArgs) Handles BTNELIMINAR.Click
+        Dim cmb As New OleDb.OleDbCommand("DELETE * FROM PRODUCTOS WHERE CODIGO =" & TXTCODIGO.Text, CONEXION)
+        cmb.ExecuteNonQuery()
+        Poblar()
+    End Sub
+
+    Private Sub TXTRUTA_Click(sender As Object, e As EventArgs) Handles TXTRUTA.Click
+        Dim openFileDialog1 As New OpenFileDialog()
+        openFileDialog1.InitialDirectory = (My.Computer.FileSystem.CurrentDirectory & "\IMAGENES")
+        openFileDialog1.Filter = "ARCHIVOS DE IMAGENES | *.jpg;*.jpeg;*.png;*.bmp"
+        Dim result As DialogResult = openFileDialog1.ShowDialog()
+
+        TXTRUTA.Text = openFileDialog1.FileName
+        PictureBox1.Image = Image.FromFile(TXTRUTA.Text)
+    End Sub
+End Class
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   Private Sub BTNGUARDAR_Click(sender As Object, e As EventArgs) Handles BTNGUARDAR.Click
+        If TXTCODIGO.Text = "0" Then
+            Dim cmd As New OleDbCommand("INSERT INTO PRODUCTOS(DESCRIPCION, PRECIO, FOTO) VALUES (?, ?, ?)", CONEXION)
+            cmd.Parameters.AddWithValue("@descripcion", TXTDESCRIPCION.Text)
+            cmd.Parameters.AddWithValue("@precio", TXTPRECIO.Text)
+            cmd.Parameters.AddWithValue("@foto", TXTRUTA.Text)
+            cmd.ExecuteNonQuery()
+            Poblar()
+        Else
+            Dim cmd As New OleDbCommand("UPDATE PRODUCTOS SET DESCRIPCION = ?, PRECIO = ?, FOTO = ? WHERE CODIGO = ?", CONEXION)
+            cmd.Parameters.AddWithValue("@descripcion", TXTDESCRIPCION.Text)
+            cmd.Parameters.AddWithValue("@precio", TXTPRECIO.Text)
+            cmd.Parameters.AddWithValue("@foto", TXTRUTA.Text)
+            cmd.Parameters.AddWithValue("@codigo", TXTCODIGO.Text)
+            cmd.ExecuteNonQuery()
+            Poblar()
+        End If
+    End Sub
+
+
+
+
+
+PASTEEEEL
+
+
+Imports System.Data.OleDb
+
+Public Class PASTEL
+    Dim da As OleDb.OleDbDataAdapter
+    Dim ds As DataSet
+    Dim COMANDO As New OleDbCommand
+    Dim CONEXION As New OleDbConnection
+
+
+    Private Sub DataGridView1_CellContentClick(sender As Object, e As DataGridViewCellEventArgs) Handles DataGridView1.CellContentClick
+
+
+    End Sub
+
+    Private Sub Poblar()
+        da = New OleDb.OleDbDataAdapter("SELECT CODIGO,DESCRIPCION,PRECIO, FOTO FROM PRODUCTOS WHERE CATEGORIA = 'PASTEL'", CONEXION)
+        ds = New DataSet
+        da.Fill(ds)
+        If ds.Tables(0).Rows.Count > 0 Then
+            DataGridView1.AutoGenerateColumns = False
+
+            DataGridView1.DataSource = ds.Tables(0)
+        Else
+            DataGridView1.DataSource = Nothing
+        End If
+    End Sub
+
+    Private Sub DataGridView1_CellEnter(sender As Object, e As DataGridViewCellEventArgs) Handles DataGridView1.CellEnter
+        If DataGridView1.Rows.Count > 0 Then
+            If DataGridView1.CurrentRow.Cells("DESCRIPCION").Value IsNot Nothing Then
+            Else
+                DataGridView1.CurrentRow.Cells("DESCRIPCION").Value = 1
+            End If
+        End If
+
+    End Sub
+
+
+    Private Sub DataGridView1_VisibleChanged(sender As Object, e As EventArgs) Handles DataGridView1.VisibleChanged
+        For Each FILA As DataGridViewRow In DataGridView1.Rows
+            da = New OleDb.OleDbDataAdapter("SELECT * FROM PRODUCTOS WHERE CODIGO =" & FILA.Cells("CODIGO").Value, CONEXION)
+            ds = New DataSet
+            da.Fill(ds)
+
+            If ds.Tables(0).Rows.Count > 0 Then
+                FILA.Cells("FOTO").Value = Image.FromFile(ds.Tables(0).Rows(0).Item("FOTO").ToString)
+            End If
+
+
+        Next
+
+
+
+
+    End Sub
+
+
+
+
+    Private Sub PASTEL_Load(sender As Object, e As EventArgs) Handles Me.Load
+        'TODO: esta línea de código carga datos en la tabla 'PASTELERIABDDataSet4.PRODUCTOS' Puede moverla o quitarla según sea necesario.
+        Me.PRODUCTOSTableAdapter.Fill(Me.PASTELERIABDDataSet4.PRODUCTOS)
+
+        Poblar()
+
+
+        CONEXION.ConnectionString = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=C:\Users\fvivi\OneDrive\Documentos\Visual Studio 2013\Projects\proyectoPasteleria\proyectoPasteleria\PASTELERIABD.mdb"
+        CONEXION.Open()
+
+    End Sub
+End Class
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

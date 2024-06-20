@@ -1,0 +1,331 @@
+import pygame
+import sys
+import random
+
+# Inicializar Pygame
+pygame.init()
+
+ANCHO = 1000
+ALTO = 600
+
+# Crea la ventana
+ventana = pygame.display.set_mode((ANCHO, ALTO))
+pygame.display.set_caption("Proyecto 1")
+
+# Cargar imagen de empezar
+imagen_empezar = pygame.image.load('empezar.png')
+tamaño_empezar = (200, 100)
+imagen_empezar = pygame.transform.scale(imagen_empezar, tamaño_empezar)
+posicion_empezar = ((ANCHO - tamaño_empezar[0]) // 2, (ALTO - tamaño_empezar[1]) // 2)
+
+# Cargar imagen de salir
+imagen_salir = pygame.image.load('salir.png')
+tamaño_salir = (200, 100)
+imagen_salir = pygame.transform.scale(imagen_salir, tamaño_salir)
+posicion_salir = ((ANCHO - tamaño_salir[0]) // 2, (ALTO - tamaño_salir[1]) // 2 + 120)
+
+juego_iniciado = False
+
+# Bucle para mostrar la pantalla de inicio
+while not juego_iniciado:
+    ventana.fill((0, 0, 0)) 
+    ventana.blit(imagen_empezar, posicion_empezar)
+    ventana.blit(imagen_salir, posicion_salir)
+    pygame.display.flip()
+
+    for evento in pygame.event.get():
+        if evento.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        elif evento.type == pygame.MOUSEBUTTONDOWN:
+            if posicion_empezar[0] <= evento.pos[0] <= posicion_empezar[0] + tamaño_empezar[0] and posicion_empezar[1] <= evento.pos[1] <= posicion_empezar[1] + tamaño_empezar[1]:
+                juego_iniciado = True
+            elif posicion_salir[0] <= evento.pos[0] <= posicion_salir[0] + tamaño_salir[0] and posicion_salir[1] <= evento.pos[1] <= posicion_salir[1] + tamaño_salir[1]:
+                pygame.quit()
+                sys.exit()
+
+# Función para cargar el fondo según el nivel
+def cargar_fondo(nivel):
+    if nivel == 1:
+        fondo = pygame.image.load('fondo.png')
+    elif nivel == 2:
+        fondo = pygame.image.load('fondo2.png')  # Asegúrate de tener esta imagen
+    # Puedes agregar más niveles aquí
+    return pygame.transform.scale(fondo, (ANCHO, ALTO))
+
+# Inicializar el juego con el primer fondo
+nivel = 1
+fondo = cargar_fondo(nivel)
+
+# Cargar imágenes para la animación del personaje
+imagenes_caminar_izquierda = [pygame.image.load(f'izquierda{i}.png') for i in range(1, 4)]
+imagenes_caminar_derecha = [pygame.image.load(f'derecha{i}.png') for i in range(1, 4)]
+
+# Cargar imágenes para el ataque del personaje
+imagenes_atacar_izquierda = [pygame.image.load(f'atacar_izquierda{i}.png') for i in range(1, 4)]
+
+# Redimensionar imágenes de animación del personaje al tamaño deseado
+tamaño_deseado = (150, 150)
+imagenes_caminar_izquierda = [pygame.transform.scale(img, tamaño_deseado) for img in imagenes_caminar_izquierda]
+imagenes_caminar_derecha = [pygame.transform.scale(img, tamaño_deseado) for img in imagenes_caminar_derecha]
+imagenes_atacar_izquierda = [pygame.transform.scale(img, tamaño_deseado) for img in imagenes_atacar_izquierda]
+
+# Cargar imágenes para el enemigo y rotarlas para que miren hacia la izquierda
+imagenes_enemigo = [pygame.image.load(f'caminar_izquierda{i}.png') for i in range(1, 4)]
+imagenes_enemigo = [pygame.transform.scale(img, tamaño_deseado) for img in imagenes_enemigo]
+imagenes_enemigo = [pygame.transform.flip(img, True, False) for img in imagenes_enemigo]
+
+# Cargar imagen del hongo
+imagen_hongo = pygame.image.load('hongo.png')
+tamaño_hongo = (200, 100)
+imagen_hongo = pygame.transform.scale(imagen_hongo, tamaño_hongo)
+
+# Lista para los hongos
+hongos = []
+
+# Posición inicial del enemigo
+posicion_enemigo = (ANCHO, 300)
+velocidad_enemigo = 6
+
+# Definir posición inicial del personaje
+x = 70
+y = 300
+
+# Definir velocidad de movimiento y de salto
+velocidad = 5
+fuerza_salto = 15
+velocidad_salto = fuerza_salto
+gravedad = 1.5
+
+# Controlar si el personaje está en el aire o no
+en_el_aire = False
+
+indice_animacion = 0
+direccion = "derecha"
+atacando = False
+indice_ataque = 0
+
+# Posición inicial del fondo
+posicion_fondo = 0
+
+# Definir la vida del personaje
+vida_maxima = 100
+vida_actual = vida_maxima
+
+# Inicializar puntaje
+puntaje = 0
+
+# Fuentes para texto
+fuente = pygame.font.Font(None, 36)
+fuente_grande = pygame.font.Font(None, 72)
+
+# Bucle principal del juego
+reloj = pygame.time.Clock()
+FPS = 30
+
+nivel_superado = False
+
+# Cargar imágenes de los botones de pausa
+imagen_continuar = pygame.image.load('continuar.png')
+tamaño_continuar = (200, 100)
+imagen_continuar = pygame.transform.scale(imagen_continuar, tamaño_continuar)
+
+imagen_reiniciar = pygame.image.load('reiniciar.png')
+tamaño_reiniciar = (200, 100)
+imagen_reiniciar = pygame.transform.scale(imagen_reiniciar, tamaño_reiniciar)
+
+imagen_salir_pausa = pygame.image.load('close.png')
+tamaño_salir_pausa = (200, 100)
+imagen_salir_pausa = pygame.transform.scale(imagen_salir_pausa, tamaño_salir_pausa)
+
+# Definir posiciones de los botones de pausa
+posicion_continuar = ((ANCHO - tamaño_continuar[0]) // 2, (ALTO - tamaño_continuar[1]) // 2 - 120)
+posicion_reiniciar = ((ANCHO - tamaño_reiniciar[0]) // 2, (ALTO - tamaño_reiniciar[1]) // 2)
+posicion_salir_pausa = ((ANCHO - tamaño_salir_pausa[0]) // 2, (ALTO - tamaño_salir_pausa[1]) // 2 + 120)
+
+# Función para mostrar la pantalla de pausa
+def mostrar_pausa():
+    ventana.fill((0, 0, 0))
+    ventana.blit(imagen_continuar, posicion_continuar)
+    ventana.blit(imagen_reiniciar, posicion_reiniciar)
+    ventana.blit(imagen_salir_pausa, posicion_salir_pausa)
+    pygame.display.flip()
+
+# Función para reiniciar el juego
+def reiniciar_juego():
+    global x, y, vida_actual, puntaje, posicion_enemigo, hongos, nivel_superado, posicion_fondo, nivel, fondo
+    x = 70
+    y = 300
+    vida_actual = vida_maxima
+    puntaje = 0
+    posicion_enemigo = (ANCHO, 300)
+    hongos = []
+    nivel_superado = False
+    posicion_fondo = 0
+    nivel = 1
+    fondo = cargar_fondo(nivel)
+
+# Función para avanzar al siguiente nivel
+def siguiente_nivel():
+    global nivel, fondo, posicion_fondo, nivel_superado
+    nivel += 1
+    fondo = cargar_fondo(nivel)
+    posicion_fondo = 0
+    nivel_superado = False
+
+# Variable para controlar si el juego está en pausa
+en_pausa = False
+
+while True:
+    for evento in pygame.event.get():
+        if evento.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        elif evento.type == pygame.KEYDOWN and evento.key == pygame.K_p:
+            en_pausa = not en_pausa
+        elif evento.type == pygame.MOUSEBUTTONDOWN and en_pausa:
+            if posicion_continuar[0] <= evento.pos[0] <= posicion_continuar[0] + tamaño_continuar[0] and posicion_continuar[1] <= evento.pos[1] <= posicion_continuar[1] + tamaño_continuar[1]:
+                en_pausa = False
+            elif posicion_reiniciar[0] <= evento.pos[0] <= posicion_reiniciar[0] + tamaño_reiniciar[0] and posicion_reiniciar[1] <= evento.pos[1] <= posicion_reiniciar[1] + tamaño_reiniciar[1]:
+                reiniciar_juego()
+                en_pausa = False
+            elif posicion_salir_pausa[0] <= evento.pos[0] <= posicion_salir_pausa[0] + tamaño_salir_pausa[0] and posicion_salir_pausa[1] <= evento.pos[1] <= posicion_salir_pausa[1] + tamaño_salir_pausa[1]:
+                pygame.quit()
+                sys.exit()
+
+    if en_pausa:
+        mostrar_pausa()
+        continue
+
+    teclas = pygame.key.get_pressed()
+    
+    if teclas[pygame.K_LEFT]:
+        x -= velocidad
+        direccion = "izquierda"
+    if teclas[pygame.K_RIGHT]:
+        x += velocidad
+        direccion = "derecha"
+
+    if not en_el_aire:
+        if teclas[pygame.K_UP]:
+            en_el_aire = True
+            velocidad_salto = fuerza_salto
+
+    if teclas[pygame.K_SPACE]:
+        atacando = True
+        indice_ataque = 0
+
+    if en_el_aire:
+        y -= velocidad_salto
+        velocidad_salto -= gravedad
+        if y >= 300:
+            y = 300
+            en_el_aire = False  
+
+    # Mueve el fondo en la dirección opuesta al movimiento del personaje
+    if direccion == "derecha":
+        posicion_fondo -= velocidad
+    elif direccion == "izquierda":
+        posicion_fondo += velocidad
+
+    # Repetir el fondo
+    if posicion_fondo <= -ANCHO:
+        posicion_fondo = 0
+    elif posicion_fondo >= ANCHO:
+        posicion_fondo = 0
+
+    # Limpiar la pantalla con el color negro
+    ventana.fill((0, 0, 0))
+
+    # Dibujar fondo repetitivo
+    ventana.blit(fondo, (posicion_fondo, 0))
+    ventana.blit(fondo, (posicion_fondo + ANCHO, 0))
+
+    # Actualizar animación
+    if atacando:
+        imagen_actual = imagenes_atacar_izquierda[indice_ataque]
+        indice_ataque = (indice_ataque + 1) % len(imagenes_atacar_izquierda)
+        if indice_ataque == 0:
+            atacando = False
+    else:
+        if direccion == "izquierda":
+            indice_animacion = (indice_animacion + 1) % len(imagenes_caminar_izquierda)
+            imagen_actual = imagenes_caminar_izquierda[indice_animacion]
+        elif direccion == "derecha":
+            indice_animacion = (indice_animacion + 1) % len(imagenes_caminar_derecha)
+            imagen_actual = imagenes_caminar_derecha[indice_animacion]
+
+    ventana.blit(imagen_actual, (x, y))
+
+    # Dibujar enemigo y moverlo hacia el personaje principal
+    enemigo_rect = pygame.Rect(posicion_enemigo[0], posicion_enemigo[1], tamaño_deseado[0], tamaño_deseado[1])
+    ventana.blit(imagenes_enemigo[indice_animacion % len(imagenes_enemigo)], posicion_enemigo)
+    
+    if posicion_enemigo[0] > x:
+        posicion_enemigo = (posicion_enemigo[0] - velocidad_enemigo, posicion_enemigo[1])
+    else:
+        posicion_enemigo = (posicion_enemigo[0] + velocidad_enemigo, posicion_enemigo[1])
+
+    indice_animacion += 1
+
+    # Detectar colisiones con el enemigo
+    if pygame.Rect(x, y, tamaño_deseado[0], tamaño_deseado[1]).colliderect(enemigo_rect):
+        if atacando:
+            # Eliminar enemigo y aumentar el puntaje
+            posicion_enemigo = (ANCHO, 300)
+            puntaje += 10
+        else:
+            vida_actual -= 1
+            if vida_actual <= 0:
+                print("Game Over")
+                ventana.fill((0, 0, 0))
+                texto_game_over = fuente_grande.render("Game Over", True, (255, 0, 0))
+                ventana.blit(texto_game_over, (ANCHO // 2 - texto_game_over.get_width() // 2, ALTO // 2 - texto_game_over.get_height() // 2))
+                pygame.display.flip()
+                pygame.time.wait(3000)
+                pygame.quit()
+                sys.exit()
+
+    # Crear hongos periódicamente
+    if random.randint(1, 300) == 1:
+        hongo_y = y + tamaño_deseado[1] - tamaño_hongo[1]  # Ajustar para que el hongo esté en el suelo
+        hongos.append(pygame.Rect(ANCHO, hongo_y, tamaño_hongo[0], tamaño_hongo[1]))
+
+    # Mover y dibujar los hongos, detectar colisiones
+    for hongo in hongos:
+        hongo.x -= velocidad
+        ventana.blit(imagen_hongo, hongo.topleft)
+        if pygame.Rect(x, y, tamaño_deseado[0], tamaño_deseado[1]).colliderect(hongo):
+            vida_actual += 10  # Incrementar la vida en lugar de disminuirla
+            if vida_actual > vida_maxima:
+                vida_actual = vida_maxima
+            hongos.remove(hongo)
+
+    # Dibujar la barra de vida
+    ancho_barra_vida = 200
+    alto_barra_vida = 20
+    x_barra_vida = 20
+    y_barra_vida = 20
+    vida_percent = vida_actual / vida_maxima
+    ancho_barra_actual = int(ancho_barra_vida * vida_percent)
+    color_barra_vida = (255, 0, 0)
+    pygame.draw.rect(ventana, (255, 255, 255), (x_barra_vida, y_barra_vida, ancho_barra_vida, alto_barra_vida))
+    pygame.draw.rect(ventana, color_barra_vida, (x_barra_vida, y_barra_vida, ancho_barra_actual, alto_barra_vida))
+
+    # Dibujar puntaje
+    texto_puntaje = fuente.render(f"Puntaje: {puntaje}", True, (255, 255, 255))
+    ventana.blit(texto_puntaje, (ANCHO - texto_puntaje.get_width() - 20, 20))
+
+    # Verificar si se ha alcanzado el puntaje para pasar al siguiente nivel
+    if puntaje >= 100 and not nivel_superado:
+        nivel_superado = True
+        ventana.fill((0, 0, 0))
+        texto_nivel_superado = fuente_grande.render("¡Nivel Superado! Pasaras al siguiente nivel", True, (0, 240, 0))
+        ventana.blit(texto_nivel_superado, (ANCHO // 2 - texto_nivel_superado.get_width() // 2, ALTO // 2 - texto_nivel_superado.get_height() // 2))
+        pygame.display.flip()
+        pygame.time.wait(3000)
+        siguiente_nivel()
+
+    pygame.display.flip()
+    reloj.tick(FPS)
+

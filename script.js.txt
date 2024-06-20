@@ -1,0 +1,32 @@
+// Simulando una base de datos en memoria
+let database = [];
+
+// Función para mostrar datos en la página
+function displayData() {
+    const dataList = document.getElementById("dataList");
+    dataList.innerHTML = "";
+
+    for (const data of database) {
+        const listItem = document.createElement("li");
+        listItem.textContent = data;
+        dataList.appendChild(listItem);
+    }
+}
+
+// Agregar datos a la base de datos y actualizar la página
+function addData(event) {
+    event.preventDefault();
+    const newData = document.getElementById("newData").value;
+    database.push(newData);
+    displayData();
+    document.getElementById("newData").value = "";
+}
+
+// Asociar la función addData al formulario
+const dataForm = document.getElementById("dataForm");
+dataForm.addEventListener("submit", addData);
+
+// Mostrar los datos iniciales
+displayData();
+
+
